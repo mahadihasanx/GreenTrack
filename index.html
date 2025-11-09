@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green Track - Plant Trees, Earn Points</title>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    body { margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+    
+    // Icons - Simple SVG components
+    const Trees = (props) => (
+      <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 13v8M12 3v3m-3 15 3-3 3 3M9 14.5 5.5 18M14.5 9.5 18 13"/>
+        <circle cx="12" cy="9" r="2"/><circle cx="17" cy="15" r="2"/><circle cx="7" cy="15" r="2"/>
+      </svg>
+    );
+    
+    const MapPin = (props) => (
+      <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+      </svg>
+    );
+    
+    const Plus = (props) => (
+      <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M5 12h14M12 5v14"/>
+      </svg>
+    );
+    
+    const Trophy = (props) => (
+      <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+      </svg>
+    );
+    
+    const Leaf = (props) => (
+      <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10ZM2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+      </svg>
+    );
+    
+    const Users = (props) => (
+      <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    );
+    
+    const Award = (props) => (
+      <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+      </svg>
+    );
+
+    // Main App Component
+    function GreenTrack() {
+      const [activeTab, setActiveTab] = useState('map');
+      const [trees, setTrees] = useState([]);
+      const [currentUser, setCurrentUser] = useState(null);
+      const [showLogin, setShowLogin] = useState(true);
+      const [loginName, setLoginName] = useState('');
+      const [formData, setFormData] = useState({
+        city: '',
+        location: '',
+        treeType: ''
+      });
+
+      const cities = [
+        { name: 'Dhaka', greenCoverage: 12, trees: 450 },
+        { name: 'Chittagong', greenCoverage: 18, trees: 680 },
+        { name: 'Sylhet', greenCoverage: 35, trees: 920 },
+        { name: 'Khulna', greenCoverage: 22, trees: 530 },
+        { name: 'Rajshahi', greenCoverage: 15, trees: 420 },
+        { name: 'Barisal', greenCoverage: 28, trees: 710 }
+      ];
+
+      const [leaderboard] = useState([
+        { name: 'Shihab Mahir', trees: 45, points: 1350, badges: ['🌟', '🏆', '🌳'] },
+        { name: 'Tasnim Orna', trees: 38, points: 1140, badges: ['🌟', '🌳'] },
+        { name: 'Shreya', trees: 32, points: 960, badges: ['🌟'] },
+        { name: 'Mehedi Hasan', trees: 28, points: 840, badges: ['🌳'] },
+        { name: 'Ayon', trees: 25, points: 750, badges: ['🌟'] }
+      ]);
+
+      const handleLogin = () => {
+        if (!loginName.trim()) {
+          alert('Please enter your name');
+          return;
+        }
+        setCurrentUser({
+          name: loginName,
+          joinDate: new Date().toLocaleDateString(),
+          totalTrees: 0,
+          totalPoints: 0,
+          rank: '-'
+        });
+        setShowLogin(false);
+      };
+
+      const handleSubmit = () => {
+        if (!formData.city || !formData.location || !formData.treeType) {
+          alert('Please fill all fields');
+          return;
+        }
+        
+        const newTree = {
+          id: Date.now(),
+          userName: currentUser.name,
+          ...formData,
+          date: new Date().toLocaleDateString(),
+          status: 'planted',
+          points: 30
+        };
+        
+        setTrees([newTree, ...trees]);
+        setCurrentUser({
+          ...currentUser,
+          totalTrees: currentUser.totalTrees + 1,
+          totalPoints: currentUser.totalPoints + 30
+        });
+        setFormData({ city: '', location: '', treeType: '' });
+      };
+
+      const getCoverageColor = (coverage) => {
+        if (coverage < 15) return 'bg-red-500';
+        if (coverage < 25) return 'bg-orange-500';
+        if (coverage < 35) return 'bg-yellow-500';
+        return 'bg-green-500';
+      };
+
+      const getCoverageLabel = (coverage) => {
+        if (coverage < 15) return 'Critical';
+        if (coverage < 25) return 'Low';
+        if (coverage < 35) return 'Moderate';
+        return 'Good';
+      };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
+          {/* Login Modal */}
+          {showLogin && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+                <div className="text-center mb-6">
+                  <div className="inline-block p-4 bg-green-100 rounded-full mb-4">
+                    <Trees className="w-16 h-16 text-green-600" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome to Green Track</h2>
+                  <p className="text-gray-600">Join the movement to make Bangladesh greener!</p>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Enter Your Name</label>
+                    <input
+                      type="text"
+                      value={loginName}
+                      onChange={(e) => setLoginName(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <button
+                    onClick={handleLogin}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all"
+                  >
+                    Start Your Green Journey
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Header */}
+          <header className="bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg">
+            <div className="max-w-7xl mx-auto px-4 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Trees className="w-10 h-10" />
+                  <div>
+                    <h1 className="text-3xl font-bold">Green Track</h1>
+                    <p className="text-green-100 text-sm">Plant Trees, Earn Points, Save Planet</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-right hidden sm:block">
+                    <div className="text-sm text-green-100">Welcome back,</div>
+                    <div className="font-bold text-lg">{currentUser?.name || 'Guest'}</div>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab('profile')}
+                    className="bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
+                  >
+                    <Users className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Navigation */}
+          <nav className="bg-white shadow-md sticky top-0 z-10">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="flex gap-1 overflow-x-auto">
+                {[
+                  { id: 'map', label: 'City Coverage', icon: MapPin },
+                  { id: 'register', label: 'Register Tree', icon: Plus },
+                  { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+                  { id: 'myTrees', label: 'My Trees', icon: Leaf },
+                  { id: 'profile', label: 'Profile', icon: Users }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? 'text-green-600 border-b-2 border-green-600'
+                        : 'text-gray-600 hover:text-green-600'
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </nav>
+
+          {/* Main Content */}
+          <main className="max-w-7xl mx-auto px-4 py-8">
+            {/* City Coverage Map */}
+            {activeTab === 'map' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Bangladesh Green Coverage Map</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {cities.map(city => (
+                      <div key={city.name} className="border-2 border-gray-200 rounded-lg p-5 hover:shadow-lg transition-shadow">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-xl font-bold text-gray-800">{city.name}</h3>
+                          <MapPin className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex justify-between text-sm mb-1">
+                              <span className="text-gray-600">Green Coverage</span>
+                              <span className="font-bold text-gray-800">{city.greenCoverage}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                              <div
+                                className={`h-full ${getCoverageColor(city.greenCoverage)} transition-all duration-500`}
+                                style={{ width: `${city.greenCoverage}%` }}
+                              ></div>
+                            </div>
+                            <span className={`inline-block mt-1 px-2 py-1 rounded text-xs font-medium ${getCoverageColor(city.greenCoverage)} text-white`}>
+                              {getCoverageLabel(city.greenCoverage)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                            <span className="text-sm text-gray-600">Registered Trees</span>
+                            <span className="font-bold text-green-600">{city.trees}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+                  <h3 className="text-xl font-bold mb-2">🎯 Bangladesh Green Target 2030</h3>
+                  <p className="text-green-100 mb-4">Target: 25% Green Coverage Nationwide</p>
+                  <div className="bg-white/20 rounded-full h-4 overflow-hidden">
+                    <div className="bg-white h-full rounded-full" style={{ width: '76%' }}></div>
+                  </div>
+                  <p className="text-sm text-green-100 mt-2">Current Average: 19% (76% of target achieved)</p>
+                </div>
+              </div>
+            )}
+
+            {/* Register Tree */}
+            {activeTab === 'register' && (
+              <div className="max-w-2xl mx-auto">
+                <div className="bg-white rounded-xl shadow-lg p-8">
+                  <div className="text-center mb-6">
+                    <div className="inline-block p-4 bg-green-100 rounded-full mb-4">
+                      <Trees className="w-12 h-12 text-green-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800">Register Your Tree</h2>
+                    <p className="text-gray-600 mt-2">Plant a tree, earn 30 points! Keep it alive for bonus points.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                      <select
+                        value={formData.city}
+                        onChange={(e) => setFormData({...formData, city: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      >
+                        <option value="">Select city</option>
+                        {cities.map(city => (
+                          <option key={city.name} value={city.name}>{city.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Location/Area</label>
+                      <input
+                        type="text"
+                        value={formData.location}
+                        onChange={(e) => setFormData({...formData, location: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="e.g., Dhanmondi, Gulshan, etc."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tree Type</label>
+                      <select
+                        value={formData.treeType}
+                        onChange={(e) => setFormData({...formData, treeType: e.target.value})}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      >
+                        <option value="">Select tree type</option>
+                        <option value="Mango">Mango (আম)</option>
+                        <option value="Jackfruit">Jackfruit (কাঁঠাল)</option>
+                        <option value="Neem">Neem (নিম)</option>
+                        <option value="Mahogany">Mahogany (মেহগনি)</option>
+                        <option value="Guava">Guava (পেয়ারা)</option>
+                        <option value="Coconut">Coconut (নারিকেল)</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <button
+                      onClick={handleSubmit}
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 rounded-lg font-medium hover:from-green-700 hover:to-emerald-700 transition-all"
+                    >
+                      Register Tree & Earn 30 Points
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Leaderboard */}
+            {activeTab === 'leaderboard' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-800">Top Tree Planters</h2>
+                    <Trophy className="w-8 h-8 text-yellow-500" />
+                  </div>
+
+                  <div className="space-y-3">
+                    {leaderboard.map((user, index) => (
+                      <div
+                        key={user.name}
+                        className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
+                          index === 0
+                            ? 'bg-gradient-to-r from-yellow-50 to-yellow-100 border-2 border-yellow-400'
+                            : index === 1
+                            ? 'bg-gradient-to-r from-gray-50 to-gray-100 border-2 border-gray-400'
+                            : index === 2
+                            ? 'bg-gradient-to-r from-orange-50 to-orange-100 border-2 border-orange-400'
+                            : 'bg-gray-50 border-2 border-gray-200'
+                        }`}
+                      >
+                        <div className={`text-2xl font-bold w-10 h-10 flex items-center justify-center rounded-full ${
+                          index === 0 ? 'bg-yellow-400 text-white' :
+                          index === 1 ? 'bg-gray-400 text-white' :
+                          index === 2 ? 'bg-orange-400 text-white' :
+                          'bg-gray-300 text-gray-700'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-gray-800">{user.name}</h3>
+                            <div className="flex gap-1">
+                              {user.badges.map((badge, i) => (
+                                <span key={i}>{badge}</span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex gap-4 text-sm text-gray-600 mt-1">
+                            <span className="flex items-center gap-1">
+                              <Trees className="w-4 h-4" />
+                              {user.trees} trees
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Award className="w-4 h-4" />
+                              {user.points} points
+                            </span>
+                          </div>
+                        </div>
+
+                        {index === 0 && <Trophy className="w-8 h-8 text-yellow-500" />}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl shadow-lg p-6 text-white">
+                    <div className="text-4xl mb-2">🏆</div>
+                    <h3 className="font-bold text-lg">Gold Badge</h3>
+                    <p className="text-sm text-yellow-100">Plant 50+ trees</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+                    <div className="text-4xl mb-2">🌳</div>
+                    <h3 className="font-bold text-lg">Survivor Badge</h3>
+                    <p className="text-sm text-green-100">Keep 20 trees alive for 6 months</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+                    <div className="text-4xl mb-2">🌟</div>
+                    <h3 className="font-bold text-lg">Champion Badge</h3>
+                    <p className="text-sm text-blue-100">Top 10 planter</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* My Trees */}
+            {activeTab === 'myTrees' && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-6">Your Tree Plantation History</h2>
+                  
+                  {trees.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Leaf className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 text-lg">You haven't registered any trees yet.</p>
+                      <button
+                        onClick={() => setActiveTab('register')}
+                        className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Register Your First Tree
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {trees.map(tree => (
+                        <div key={tree.id} className="border-2 border-green-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h3 className="font-bold text-gray-800">{tree.treeType}</h3>
+                              <p className="text-sm text-gray-600">{tree.location}, {tree.city}</p>
+                            </div>
+                            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                              +{tree.points} pts
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Planted on {tree.date}</span>
+                            <span className="flex items-center gap-1 text-green-600 font-medium">
+                              <Leaf className="w-4 h-4" />
+                              Surviving
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Profile */}
+            {activeTab === 'profile' && currentUser && (
+              <div className="max-w-4xl mx-auto space-y-6">
+                <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 h-32"></div>
+                  <div className="px-8 pb-8">
+                    <div className="flex items-end gap-6 -mt-16 mb-6">
+                      <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center text-5xl font-bold text-green-600 border-4 border-white shadow-lg">
+                        {currentUser.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="mb-4">
+                        <h2 className="text-3xl font-bold text-gray-800">{currentUser.name}</h2>
+                        <p className="text-gray-600">Member since {currentUser.joinDate}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border-2 border-green-200">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Trees className="w-6 h-6 text-green-600" />
+                          <span className="text-sm text-gray-600">Trees Planted</span>
+                        </div>
+                        <div className="text-4xl font-bold text-green-600">{currentUser.totalTrees}</div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-6 border-2 border-yellow-200">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Award className="w-6 h-6 text-yellow-600" />
+                          <span className="text-sm text-gray-600">Total Points</span>
+                        </div>
+                        <div className="text-4xl font-bold text-yellow-600">{currentUser.totalPoints}</div>
+                      </div>
+                      
+                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border-2 border-purple-200">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Trophy className="w-6 h-6 text-purple-600" />
+                          <span className="text-sm text-gray-600">Leaderboard Rank</span>
+                        </div>
+                        <div className="text-4xl font-bold text-purple-600">{currentUser.rank}</div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-6">
+                      <h3 className="text-xl font-bold text-gray-800 mb-4">Achievements</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className={`text-center p-4 rounded-lg border-2 ${currentUser.totalTrees >= 1 ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-200 opacity-50'}`}>
+                          <div className="text-3xl mb-2">🌱</div>
+                          <div className="font-medium text-sm">First Tree</div>
+                        </div>
+                        <div className={`text-center p-4 rounded-lg border-2 ${currentUser.totalTrees >= 5 ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-200 opacity-50'}`}>
+                          <div className="text-3xl mb-2">🌳</div>
+                          <div className="font-medium text-sm">5 Trees</div>
+                        </div>
+                        <div className={`text-center p-4 rounded-lg border-2 ${currentUser.totalTrees >= 10 ? 'bg-yellow-50 border-yellow-300' : 'bg-gray-50 border-gray-200 opacity-50'}`}>
+                          <div className="text-3xl mb-2">🏆</div>
+                          <div className="font-medium text-sm">10 Trees</div>
+                        </div>
+                        <div className={`text-center p-4 rounded-lg border-2 ${currentUser.totalTrees >= 25 ? 'bg-purple-50 border-purple-300' : 'bg-gray-50 border-gray-200 opacity-50'}`}>
+                          <div className="text-3xl mb-2">⭐</div>
+                          <div className="font-medium text-sm">Champion</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t">
+                      <button
+                        onClick={() => {
+                          setShowLogin(true);
+                          setCurrentUser(null);
+                          setTrees([]);
+                        }}
+                        className="text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<GreenTrack />);
+  </script>
+</body>
+</html>
